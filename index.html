@@ -3,59 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy International Women's Day</title>
+    <title>Mere Ladle - Full Crew</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #0b0214; /* Deep purple theme */
+            background: radial-gradient(circle, #1a0210 0%, #000 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
             color: #fff;
         }
-        canvas {
-            display: block;
-            position: absolute;
-            z-index: 1;
-        }
-        .content {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            pointer-events: none;
-            width: 80%;
-        }
+        canvas { position: absolute; z-index: 1; }
+        .content { position: relative; z-index: 3; text-align: center; pointer-events: none; }
+        
         h1 {
-            font-size: 3rem;
-            margin-bottom: 250px; /* Space for the heart in the middle */
-            background: linear-gradient(90deg, #ff7eb3, #ff758c, #ad3981);
+            font-size: 2.8rem;
+            margin-bottom: 300px;
+            background: linear-gradient(45deg, #ff2d55, #ffacbc, #ff2d55);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            text-shadow: 0 0 25px rgba(255,45,85,0.4);
+            letter-spacing: 2px;
         }
-        .message-container {
-            font-size: 1.5rem;
-            font-weight: 300;
-            height: 40px;
-            opacity: 0;
-            transition: opacity 1s ease-in-out;
-            color: #f8bbd0;
-            margin-top: 100px;
+
+        .description-box { height: 120px; margin-top: 150px; }
+        .name-tag { font-size: 2.2rem; color: #ffeb3b; font-weight: 800; display: block; text-shadow: 0 0 15px rgba(251, 192, 45, 0.6); }
+        .desc-text { font-size: 1.3rem; color: #e1f5fe; font-style: italic; display: block; margin-top: 10px; }
+        
+        #music-btn {
+            position: fixed;
+            bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #ff2d55;
+            color: #ff2d55;
+            padding: 12px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 100;
+            font-weight: bold;
+            backdrop-filter: blur(8px);
+            transition: 0.3s;
         }
-        .visible {
-            opacity: 1;
-        }
+        #music-btn:hover { background: #ff2d55; color: #fff; transform: scale(1.1); }
+
+        .fade { transition: all 0.7s ease-in-out; opacity: 0; transform: translateY(10px); }
+        .visible { opacity: 1; transform: translateY(0); }
     </style>
 </head>
 <body>
 
+<button id="music-btn">🎵 START SHEESHA SONG</button>
+
+<audio id="bg-music" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" type="audio/mpeg">
+</audio>
+
 <div class="content">
-    <h1>Happy International Women's Day</h1>
-    <div id="message" class="message-container">Resilience & Strength</div>
+    <h1>MERE LADLE</h1>
+    <div id="info-box" class="description-box fade">
+        <span id="name-display" class="name-tag"></span>
+        <span id="desc-display" class="desc-text"></span>
+    </div>
 </div>
 
 <canvas id="heartCanvas"></canvas>
@@ -63,92 +75,79 @@
 <script>
     const canvas = document.getElementById('heartCanvas');
     const ctx = canvas.getContext('2d');
-    const msgElement = document.getElementById('message');
+    const audio = document.getElementById('bg-music');
+    const btn = document.getElementById('music-btn');
 
-    const points = [
-        "Resilience & Boundless Strength",
-        "Leaders of Innovation & Change",
-        "The Heart of Compassion & Empathy",
-        "Breaking Barriers Every Day",
-        "Wisdom that Inspires Generations"
+    btn.onclick = () => {
+        if (audio.paused) { audio.play(); btn.innerText = "⏸ PAUSE"; }
+        else { audio.pause(); btn.innerText = "▶ PLAY"; }
+    };
+
+    const profiles = [
+        { name: "Guru", desc: "The Soulful Singer — Spreading magic through every note." },
+        { name: "Sayali", desc: "The Sanskari One — Carrying grace and tradition in her heart." },
+        { name: "Aditya", desc: "The Heavy Driver — Fast, fearless, and always in control." },
+        { name: "Bhagyashree", desc: "The Chidchidi — Our favorite little ball of cranky energy!" },
+        { name: "Priti", desc: "The Laughing Machine — Turning every moment into a joyful riot." },
+        { name: "Pooja", desc: "The Pahadan — Strong and majestic, like the mountains she loves." },
+        { name: "Sumit", desc: "The Blogger — Capturing life's best moments and telling our story." }
     ];
 
-    let msgIndex = 0;
+    let pIdx = 0;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
     let particles = [];
-    const particleCount = 800;
     let time = 0;
 
-    // Heart formula
     function getHeartPoint(t) {
         return {
             x: 16 * Math.pow(Math.sin(t), 3),
-            y: -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t))
+            y: -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)),
+            z: Math.sin(t * 3) * 8
         };
     }
 
     class Particle {
-        constructor(angle) {
-            this.angle = angle;
-            this.basePos = getHeartPoint(angle);
-            this.size = Math.random() * 2.5 + 0.5;
-            // Purple and Pink palette
-            this.color = `rgba(${200 + Math.random() * 55}, ${100 + Math.random() * 100}, ${200 + Math.random() * 55}, 0.8)`;
-            this.offset = Math.random() * Math.PI * 2;
+        constructor(a) {
+            const pt = getHeartPoint(a);
+            this.x = pt.x; this.y = pt.y; this.z = pt.z;
+            this.s = Math.random() * 2 + 1;
+            this.c = `hsla(${340 + Math.random() * 40}, 100%, 75%, 0.85)`;
         }
-
-        draw(scale) {
-            const drift = Math.sin(time + this.offset) * 1.5;
-            const x = canvas.width / 2 + (this.basePos.x * scale) + drift;
-            const y = canvas.height / 2 + (this.basePos.y * scale) + drift;
-
-            ctx.fillStyle = this.color;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = this.color;
+        draw(p, r) {
+            let rx = (this.x * p) * Math.cos(r) - (this.z * p) * Math.sin(r);
+            let rz = (this.x * p) * Math.sin(r) + (this.z * p) * Math.cos(r);
+            const pr = 650 / (650 + rz);
+            ctx.fillStyle = this.c;
             ctx.beginPath();
-            ctx.arc(x, y, this.size, 0, Math.PI * 2);
+            ctx.arc(canvas.width/2 + rx*pr, canvas.height/2 + (this.y*p)*pr, this.s*pr, 0, 7);
             ctx.fill();
         }
     }
 
-    for (let i = 0; i < particleCount; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        particles.push(new Particle(angle));
-    }
+    for(let i=0; i<1500; i++) particles.push(new Particle(Math.random()*Math.PI*2));
 
-    function rotateMessages() {
-        msgElement.classList.remove('visible');
+    function cycle() {
+        const box = document.getElementById('info-box');
+        box.classList.remove('visible');
         setTimeout(() => {
-            msgIndex = (msgIndex + 1) % points.length;
-            msgElement.innerText = points[msgIndex];
-            msgElement.classList.add('visible');
-        }, 1000);
+            document.getElementById('name-display').innerText = profiles[pIdx].name;
+            document.getElementById('desc-display').innerText = profiles[pIdx].desc;
+            box.classList.add('visible');
+            pIdx = (pIdx + 1) % profiles.length;
+        }, 700);
     }
-
-    // Initial fade in
-    setTimeout(() => msgElement.classList.add('visible'), 500);
-    setInterval(rotateMessages, 4000);
+    cycle(); setInterval(cycle, 4500);
 
     function animate() {
-        ctx.fillStyle = 'rgba(11, 2, 20, 0.2)'; // Clear with trailing effect
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Pulse logic: Size flows between 9 and 15
-        const pulseScale = 12 + Math.sin(time * 2.5) * 3;
-
-        particles.forEach(p => p.draw(pulseScale));
-
-        time += 0.04;
+        ctx.fillStyle = 'rgba(0,0,0,0.18)';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        const pulse = 13 + Math.sin(time * 2.8) * 5; 
+        particles.forEach(p => p.draw(pulse, time * 0.7));
+        time += 0.035;
         requestAnimationFrame(animate);
     }
-
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    });
-
+    window.onresize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     animate();
 </script>
 </body>
